@@ -3,7 +3,8 @@ import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
 public class Ground extends Actor {
     public Ground(int width, int height) {
         GreenfootImage img = new GreenfootImage(width, height);
-        img.setColor(Color.BLACK);
+        //img.setColor(Color.BLACK);
+        img.setColor(new Color(0, 0, 0, 100)); // Black with some transparency
         img.fill();
         setImage(img);
     }
