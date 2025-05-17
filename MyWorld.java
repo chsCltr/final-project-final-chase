@@ -2,7 +2,7 @@ import greenfoot.*;
 
 public class MyWorld extends World {
     public MyWorld() {    
-        super(600, 400, 1);
+        super(1000, 600, 1);
 
         // Load, scale, and set the background image
         GreenfootImage bg = new GreenfootImage("images/background.jpg");
@@ -31,11 +31,11 @@ public class MyWorld extends World {
         addObject(swing, spawnX, spawnY);
     }
     public void spawnScreen1(){
-        Ground platform1 = new Ground(300, 20); // Wide platform
-        Ground platform2 = new Ground(200, 30);
-        Ground platform3 = new Ground(300,30);
-        addObject(platform1, 120, 285); // Centered at bottom
-        addObject(platform2, 300, 325);
-        addObject(platform3, 500,380);
+        Ground platform1 = new Ground(500, 50); // Wide platform
+        Ground platform2 = new Ground(300, 50);
+        Ground platform3 = new Ground(400, 50);
+        addObject(platform1, 180, 435); // Centered at bottom
+        addObject(platform2, 510, 490);
+        addObject(platform3, 800,570);
     }
 }
