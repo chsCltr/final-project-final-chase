@@ -109,21 +109,27 @@ public class Player extends Actor {
 
     private void checkGround() {
         World world = getWorld();
-
-        if (isTouching(Ground.class)) {
+        Actor ground = getOneIntersectingObject(Ground.class);  // Check for touching ground
+    
+        if (ground != null) {
+            // Adjust the player’s position to prevent teleportation issues
             while (isTouching(Ground.class)) {
-                setLocation(getX(), getY() - 1);
+                setLocation(getX(), getY() - 1);  // Fine-tune position to avoid teleporting
             }
-            velocityY = 0;
-            onGround = true;
-        } else if (getY() + getImage().getHeight() / 2 >= world.getHeight()) {
-            setLocation(getX(), world.getHeight() - getImage().getHeight() / 2);
             velocityY = 0;
             onGround = true;
         } else {
             onGround = false;
         }
+    
+        // Prevent player from falling through the bottom of the world
+        if (getY() + getImage().getHeight() / 2 >= world.getHeight()) {
+            setLocation(getX(), world.getHeight() - getImage().getHeight() / 2);
+            velocityY = 0;
+            onGround = true;
+        }
     }
+
 
     private void animate() {
         // Show attack frame for a few frames, then revert to idle/run
@@ -160,21 +166,23 @@ public class Player extends Actor {
         String dir = directionFacing;
         if (Greenfoot.isKeyDown("up")) dir = "up";
         else if (Greenfoot.isKeyDown("down") && !onGround) dir = "down";
-
+    
         MyWorld world = (MyWorld) getWorld();
         Swing swing = new Swing();
-        swing.getImage().scale(80, 40);
-
+    
+        // Position the swing based on direction
         int spawnX = getX();
         int spawnY = getY();
-
+    
         switch (dir) {
             case "right": spawnX += 40; break;
             case "left":  spawnX -= 40; break;
             case "up":    spawnY -= 40; break;
             case "down":  spawnY += 40; break;
         }
-
-        world.addObject(swing, spawnX, spawnY);
+    
+        swing.setRotationBasedOnDirection(dir);  // Apply the direction rotation
+        world.addObject(swing, spawnX, spawnY);  // Add the swing to the world
     }
+
 }
