@@ -7,12 +7,15 @@ public class Player extends Actor {
     private final int maxFallSpeed = 10;
     private boolean onGround = false;
     public String directionFacing = "left";
-
+    
     private boolean swingSpawned = false;
-
+    private int swingCooldown = 0;  // Time remaining until next swing
+    private final int swingCooldownTime = 20;  // Cooldown frames
+    private int swingDistance = 40;
+    
     private GreenfootImage[] idleImages;
     private GreenfootImage[] runImages;
-    private GreenfootImage attackImage; // One attack frame
+    private GreenfootImage attackImage; // Attack frame
     private int runFrame = 0;
     private int runDelay = 5;
     private int runCounter = 0;
@@ -35,8 +38,8 @@ public class Player extends Actor {
             runImages[i] = new GreenfootImage("player/run/run" + (i + 1) + ".png");
         }
 
-        // Load attack image
-        attackImage = new GreenfootImage("player/attacks/swing1.png");
+        // Load attack image (swing3.png)
+        attackImage = new GreenfootImage("images/player/attacks/swing3.png");
 
         // Set initial image facing left
         GreenfootImage start = new GreenfootImage(idleImages[0]);
@@ -49,32 +52,29 @@ public class Player extends Actor {
         applyGravity();
         checkGround();
         animate();
+
+        if (swingCooldown > 0) {
+            swingCooldown--;
+        }
     }
 
     private void checkKeys() {
-        boolean moving = false;
-
         if (Greenfoot.isKeyDown("left")) {
             move(-5);
             directionFacing = "left";
-            moving = true;
             swingSpawned = false;
         }
-
         if (Greenfoot.isKeyDown("right")) {
             move(5);
             directionFacing = "right";
-            moving = true;
             swingSpawned = false;
         }
-
         if (onGround && Greenfoot.isKeyDown("space")) {
             isJumping = true;
             jumpTimer = 0;
             onGround = false;
             velocityY = jumpStrength;
         }
-
         if (isJumping && Greenfoot.isKeyDown("space")) {
             if (jumpTimer < maxJumpTime) {
                 velocityY = jumpStrength;
@@ -83,17 +83,16 @@ public class Player extends Actor {
                 isJumping = false;
             }
         }
-
         if (!Greenfoot.isKeyDown("space")) {
             isJumping = false;
         }
 
-        if (Greenfoot.isKeyDown("x") && !swingSpawned) {
+        if (Greenfoot.isKeyDown("x") && !swingSpawned && swingCooldown == 0) {
             showAttackFrame();
             spawnSwing();
             swingSpawned = true;
+            swingCooldown = swingCooldownTime;
         }
-
         if (!Greenfoot.isKeyDown("x")) {
             swingSpawned = false;
         }
@@ -109,20 +108,17 @@ public class Player extends Actor {
 
     private void checkGround() {
         World world = getWorld();
-        Actor ground = getOneIntersectingObject(Ground.class);  // Check for touching ground
-    
+        Actor ground = getOneIntersectingObject(Ground.class);
+
         if (ground != null) {
-            // Adjust the player’s position to prevent teleportation issues
             while (isTouching(Ground.class)) {
-                setLocation(getX(), getY() - 1);  // Fine-tune position to avoid teleporting
+                setLocation(getX(), getY() - 1);
             }
             velocityY = 0;
             onGround = true;
         } else {
             onGround = false;
         }
-    
-        // Prevent player from falling through the bottom of the world
         if (getY() + getImage().getHeight() / 2 >= world.getHeight()) {
             setLocation(getX(), world.getHeight() - getImage().getHeight() / 2);
             velocityY = 0;
@@ -130,12 +126,9 @@ public class Player extends Actor {
         }
     }
 
-
     private void animate() {
-        // Show attack frame for a few frames, then revert to idle/run
         if (attackDisplayCounter > 0) {
             attackDisplayCounter--;
-
             GreenfootImage img = new GreenfootImage(attackImage);
             if (directionFacing.equals("left")) img.mirrorHorizontally();
             setImage(img);
@@ -166,23 +159,21 @@ public class Player extends Actor {
         String dir = directionFacing;
         if (Greenfoot.isKeyDown("up")) dir = "up";
         else if (Greenfoot.isKeyDown("down") && !onGround) dir = "down";
-    
+
         MyWorld world = (MyWorld) getWorld();
         Swing swing = new Swing();
-    
-        // Position the swing based on direction
+
         int spawnX = getX();
         int spawnY = getY();
-    
-        switch (dir) {
-            case "right": spawnX += 40; break;
-            case "left":  spawnX -= 40; break;
-            case "up":    spawnY -= 40; break;
-            case "down":  spawnY += 40; break;
-        }
-    
-        swing.setRotationBasedOnDirection(dir);  // Apply the direction rotation
-        world.addObject(swing, spawnX, spawnY);  // Add the swing to the world
-    }
 
+        switch (dir) {
+            case "right": spawnX += swingDistance; break;
+            case "left":  spawnX -= swingDistance; break;
+            case "up":    spawnY -= swingDistance; break;
+            case "down":  spawnY += swingDistance; break;
+        }
+
+        swing.setRotationBasedOnDirection(dir);
+        world.addObject(swing, spawnX, spawnY);
+    }
 }

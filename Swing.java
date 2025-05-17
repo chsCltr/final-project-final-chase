@@ -1,35 +1,45 @@
 import greenfoot.*;
 
 public class Swing extends Actor {
-    private int countdown = 10;  // Time before the swing is removed
+    private GreenfootImage[] swingFrames = new GreenfootImage[3];
+    private int currentFrame = 0;
+    private int frameDelay = 5;
+    private int frameCounter = 0;
 
     public Swing() {
-        GreenfootImage img = new GreenfootImage("images/swing.png");
-        img.scale(80, 40);  // Adjust the size of the swing image
-        setImage(img);
+        for (int i = 0; i < 3; i++) {
+            swingFrames[i] = new GreenfootImage("images/attacks/swing" + (i + 1) + ".png");
+        }
+        setImage(swingFrames[0]);
+    }
+
+    public void act() {
+        frameCounter++;
+        if (frameCounter >= frameDelay) {
+            frameCounter = 0;
+            currentFrame++;
+            if (currentFrame >= swingFrames.length) {
+                getWorld().removeObject(this);
+                return;
+            }
+            setImage(swingFrames[currentFrame]);
+        }
     }
 
     public void setRotationBasedOnDirection(String direction) {
         switch (direction) {
             case "right":
-                setRotation(0);  // No rotation for right
+                setRotation(0);
                 break;
             case "left":
-                setRotation(180);  // Flip the swing for left
+                setRotation(180);
                 break;
             case "up":
-                setRotation(270);  // Rotate for upward swing
+                setRotation(270);
                 break;
             case "down":
-                setRotation(90);  // Rotate for downward swing
+                setRotation(90);
                 break;
-        }
-    }
-
-    public void act() {
-        countdown--;
-        if (countdown <= 0) {
-            getWorld().removeObject(this);  // Remove swing after countdown
         }
     }
 }
