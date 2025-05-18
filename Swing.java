@@ -1,45 +1,36 @@
 import greenfoot.*;
 
 public class Swing extends Actor {
-    private GreenfootImage[] swingFrames = new GreenfootImage[3];
+    private GreenfootImage[] frames = new GreenfootImage[3];
     private int currentFrame = 0;
-    private int frameDelay = 5;
-    private int frameCounter = 0;
+    private int frameDelay = 0;
 
     public Swing() {
         for (int i = 0; i < 3; i++) {
-            swingFrames[i] = new GreenfootImage("images/attacks/swing" + (i + 1) + ".png");
+            frames[i] = new GreenfootImage("images/attacks/swing" + (i + 1) + ".png");
         }
-        setImage(swingFrames[0]);
+        setImage(frames[0]);
     }
 
     public void act() {
-        frameCounter++;
-        if (frameCounter >= frameDelay) {
-            frameCounter = 0;
+        frameDelay++;
+
+        if (frameDelay >= 5) {
+            frameDelay = 0;
             currentFrame++;
-            if (currentFrame >= swingFrames.length) {
+
+            if (currentFrame >= frames.length) {
                 getWorld().removeObject(this);
-                return;
+            } else {
+                setImage(frames[currentFrame]);
             }
-            setImage(swingFrames[currentFrame]);
         }
     }
 
-    public void setRotationBasedOnDirection(String direction) {
-        switch (direction) {
-            case "right":
-                setRotation(0);
-                break;
-            case "left":
-                setRotation(180);
-                break;
-            case "up":
-                setRotation(270);
-                break;
-            case "down":
-                setRotation(90);
-                break;
-        }
+    public void setRotationBasedOnDirection(String dir) {
+        if (dir.equals("right")) setRotation(0);
+        if (dir.equals("left")) setRotation(180);
+        if (dir.equals("up")) setRotation(270);
+        if (dir.equals("down")) setRotation(90);
     }
 }

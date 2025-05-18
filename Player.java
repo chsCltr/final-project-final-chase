@@ -6,53 +6,49 @@ public class Player extends Actor {
     private final int jumpStrength = -10;
     private final int maxFallSpeed = 10;
     private boolean onGround = false;
-    public String directionFacing = "left";
 
-    private boolean swingSpawned = false;
-    private int swingCooldown = 0;  // Time remaining until next swing
-    private final int swingCooldownTime = 20;  // Cooldown frames
-    private int swingDistance = 40;
+    public String directionFacing = "left";
 
     private GreenfootImage[] idleImages;
     private GreenfootImage[] runImages;
-    private GreenfootImage attackImage; // Attack frame
-    private GreenfootImage dashImage; // Dash frame
+    private GreenfootImage attackImage;  // single attack frame
+    private GreenfootImage dashImage;
 
     private int runFrame = 0;
-    private int runDelay = 5;
     private int runCounter = 0;
+    private final int runDelay = 5;
 
     private boolean isJumping = false;
     private int jumpTimer = 0;
     private final int maxJumpTime = 8;
 
+    private boolean isDashing = false;
+    private int dashTimer = 0;
+    private final int dashDuration = 15;
+    private final int dashSpeed = 12;
+    public int dashCooldown = 0;
+
+    private boolean isAttacking = false;
     private int attackDisplayCounter = 0;
     private final int attackDisplayTime = 10;
 
-    // Dash variables
-    private boolean isDashing = false;
-    private int dashTimer = 0;
-    private final int dashDuration = 15; // frames of dash
-    private final int dashSpeed = 12;
+    private boolean swingSpawned = false;
+    private int swingCooldown = 0;
+    private final int swingCooldownTime = 20;
+    private final int swingDistance = 40;
 
     public Player() {
-        // Load idle image
         idleImages = new GreenfootImage[1];
         idleImages[0] = new GreenfootImage("player/idle.png");
 
-        // Load run animation
         runImages = new GreenfootImage[4];
         for (int i = 0; i < runImages.length; i++) {
             runImages[i] = new GreenfootImage("player/run/run" + (i + 1) + ".png");
         }
 
-        // Load attack image (swing3.png)
         attackImage = new GreenfootImage("images/player/attacks/swing3.png");
-
-        // Load dash image
         dashImage = new GreenfootImage("images/player/dash.png");
 
-        // Set initial image facing left
         GreenfootImage start = new GreenfootImage(idleImages[0]);
         start.mirrorHorizontally();
         setImage(start);
@@ -61,44 +57,41 @@ public class Player extends Actor {
     public void act() {
         if (isDashing) {
             dash();
+            return;
+        }
+
+        checkKeys();
+        applyGravity();
+        checkGround();
+
+        if (attackDisplayCounter > 0) {
+            attackDisplayCounter--;
+            GreenfootImage img = new GreenfootImage(attackImage);
+            if (directionFacing.equals("left")) img.mirrorHorizontally();
+            setImage(img);
         } else {
-            checkKeys();
-            applyGravity();
-            checkGround();
-            animate();
+            animateRunOrIdle();
+        }
 
-            if (swingCooldown > 0) {
-                swingCooldown--;
-            }
+        if (swingCooldown > 0) {
+            swingCooldown--;
+        }
+        if (dashCooldown > 0) {
+            dashCooldown--;
         }
     }
-
-    private void dash() {
-        dashTimer--;
-        int dx = (directionFacing.equals("right")) ? dashSpeed : -dashSpeed;
-        setLocation(getX() + dx, getY());
-
-        // Set dash image with direction
-        GreenfootImage img = new GreenfootImage(dashImage);
-        if (directionFacing.equals("left")) img.mirrorHorizontally();
-        setImage(img);
-
-        if (dashTimer <= 0) {
-            isDashing = false;
-            // Reset velocityY to zero so gravity can resume smoothly
-            velocityY = 0;
-        }
-    }
-
+    
     private void checkKeys() {
         if (Greenfoot.isKeyDown("c") && !isDashing) {
-            // Start dash
-            isDashing = true;
-            dashTimer = dashDuration;
-            swingSpawned = false;  // Cancel swing spawn while dashing
-            return; // skip other controls while dash starts this frame
+            if (dashCooldown <= 0) {
+                isDashing = true;
+                dashTimer = dashDuration;
+                swingSpawned = false;
+                dashCooldown = 20;  // cooldown set here before return
+                return;
+            }
         }
-
+    
         if (Greenfoot.isKeyDown("left")) {
             move(-5);
             directionFacing = "left";
@@ -109,12 +102,14 @@ public class Player extends Actor {
             directionFacing = "right";
             swingSpawned = false;
         }
+    
         if (onGround && Greenfoot.isKeyDown("space")) {
             isJumping = true;
             jumpTimer = 0;
             onGround = false;
             velocityY = jumpStrength;
         }
+    
         if (isJumping && Greenfoot.isKeyDown("space")) {
             if (jumpTimer < maxJumpTime) {
                 velocityY = jumpStrength;
@@ -123,18 +118,53 @@ public class Player extends Actor {
                 isJumping = false;
             }
         }
+    
         if (!Greenfoot.isKeyDown("space")) {
             isJumping = false;
         }
-
+    
         if (Greenfoot.isKeyDown("x") && !swingSpawned && swingCooldown == 0) {
-            showAttackFrame();
+            attackDisplayCounter = attackDisplayTime;
             spawnSwing();
             swingSpawned = true;
             swingCooldown = swingCooldownTime;
         }
+    
         if (!Greenfoot.isKeyDown("x")) {
             swingSpawned = false;
+        }
+    }
+
+
+    private void animateRunOrIdle() {
+        if (Greenfoot.isKeyDown("left") || Greenfoot.isKeyDown("right")) {
+            runCounter++;
+            if (runCounter >= runDelay) {
+                runCounter = 0;
+                runFrame = (runFrame + 1) % runImages.length;
+            }
+            GreenfootImage img = new GreenfootImage(runImages[runFrame]);
+            if (directionFacing.equals("left")) img.mirrorHorizontally();
+            setImage(img);
+        } else {
+            GreenfootImage idle = new GreenfootImage(idleImages[0]);
+            if (directionFacing.equals("left")) idle.mirrorHorizontally();
+            setImage(idle);
+        }
+    }
+
+    private void dash() {
+        dashTimer--;
+        int dx = directionFacing.equals("right") ? dashSpeed : -dashSpeed;
+        setLocation(getX() + dx, getY());
+
+        GreenfootImage img = new GreenfootImage(dashImage);
+        if (directionFacing.equals("left")) img.mirrorHorizontally();
+        setImage(img);
+
+        if (dashTimer <= 0) {
+            isDashing = false;
+            velocityY = 0;
         }
     }
 
@@ -159,43 +189,12 @@ public class Player extends Actor {
         } else {
             onGround = false;
         }
+
         if (getY() + getImage().getHeight() / 2 >= world.getHeight()) {
             setLocation(getX(), world.getHeight() - getImage().getHeight() / 2);
             velocityY = 0;
             onGround = true;
         }
-    }
-
-    private void animate() {
-        if (attackDisplayCounter > 0) {
-            attackDisplayCounter--;
-            GreenfootImage img = new GreenfootImage(attackImage);
-            if (directionFacing.equals("left")) img.mirrorHorizontally();
-            setImage(img);
-            return;
-        }
-
-        // If dashing, animation is handled in dash(), so skip here
-        if (isDashing) return;
-
-        if (Greenfoot.isKeyDown("left") || Greenfoot.isKeyDown("right")) {
-            runCounter++;
-            if (runCounter >= runDelay) {
-                runCounter = 0;
-                runFrame = (runFrame + 1) % runImages.length;
-            }
-            GreenfootImage img = new GreenfootImage(runImages[runFrame]);
-            if (directionFacing.equals("left")) img.mirrorHorizontally();
-            setImage(img);
-        } else {
-            GreenfootImage idle = new GreenfootImage(idleImages[0]);
-            if (directionFacing.equals("left")) idle.mirrorHorizontally();
-            setImage(idle);
-        }
-    }
-
-    private void showAttackFrame() {
-        attackDisplayCounter = attackDisplayTime;
     }
 
     private void spawnSwing() {
